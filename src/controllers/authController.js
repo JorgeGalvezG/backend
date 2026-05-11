@@ -163,4 +163,22 @@ const registrarUsuario = async (req, res) => {
     }
 };
 
-module.exports = { login, renovarToken, logout, registrarUsuario };
+const obtenerUsuarios = async (req, res) => {
+    try {
+        // Obtenemos todos los datos excepto la contraseña por seguridad
+        const query = `
+            SELECT id_usuario, nombres, apellidos, correo, id_rol, estado 
+            FROM usuarios_sistema 
+            ORDER BY id_usuario ASC
+        `;
+        const resultado = await pool.query(query);
+        
+        // Devolvemos la lista al frontend
+        res.status(200).json(resultado.rows);
+    } catch (error) {
+        console.error('Error al obtener usuarios:', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor al listar usuarios.' });
+    }
+};
+
+module.exports = { login, renovarToken, logout, registrarUsuario, obtenerUsuarios };
