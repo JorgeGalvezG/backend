@@ -135,6 +135,10 @@ const registrarUsuario = async (req, res) => {
             return res.status(400).json({ mensaje: 'Todos los campos son obligatorios, incluyendo los apellidos.' });
         }
 
+        if (contrasena.length < 8) {
+        return res.status(400).json({ mensaje: 'Por políticas de seguridad, la contraseña debe tener al menos 8 caracteres.' });
+        }
+        
         const usuarioExistente = await pool.query('SELECT * FROM usuarios_sistema WHERE correo = $1', [correo]);
         if (usuarioExistente.rows.length > 0) {
             return res.status(400).json({ mensaje: 'El correo ya está registrado en el club.' });
