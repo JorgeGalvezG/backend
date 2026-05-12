@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { login, renovarToken, logout, registrarUsuario, obtenerUsuarios } = require('../controllers/authController');
+const { login, renovarToken, logout, registrarUsuario, obtenerUsuarios, actualizarUsuario, eliminarUsuario } = require('../controllers/authController');
 const { verificarToken, autorizarRoles } = require('../middlewares/authMiddleware');
 
 // RUTAS PÚBLICAS (No necesitan token)
@@ -11,6 +11,8 @@ router.post('/logout', logout);
 // RUTAS PROTEGIDAS (Requieren Access Token)
 router.post('/registrar', verificarToken, autorizarRoles(1), registrarUsuario);
 router.get('/usuarios', verificarToken, autorizarRoles(1), obtenerUsuarios);
+router.put('/usuarios/:id', verificarToken, autorizarRoles(1), actualizarUsuario);
+router.delete('/usuarios/:id', verificarToken, autorizarRoles(1), eliminarUsuario);
 
 router.get('/perfil', verificarToken, (req, res) => {
     res.json({ mensaje: '¡Bienvenido al área VIP!', datos: req.usuario });

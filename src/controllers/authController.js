@@ -138,7 +138,7 @@ const registrarUsuario = async (req, res) => {
         if (contrasena.length < 8) {
         return res.status(400).json({ mensaje: 'Por políticas de seguridad, la contraseña debe tener al menos 8 caracteres.' });
         }
-        
+
         const usuarioExistente = await pool.query('SELECT * FROM usuarios_sistema WHERE correo = $1', [correo]);
         if (usuarioExistente.rows.length > 0) {
             return res.status(400).json({ mensaje: 'El correo ya está registrado en el club.' });
@@ -185,4 +185,54 @@ const obtenerUsuarios = async (req, res) => {
     }
 };
 
-module.exports = { login, renovarToken, logout, registrarUsuario, obtenerUsuarios };
+// Función para EDITAR un usuario
+const actualizarUsuario = async (req, res) => {
+    const { id } = req.params; // El ID viene en la URL
+    const { nombres, apellidos, id_rol } = req.body;
+
+    try {
+        if (!nombres || !apellidos || !id_rol) {
+            return res.status(400).json({ mensaje: 'Nombres, apellidos y rol son obligatorios.' });
+        }
+
+        const query = `
+            UPDATE usuarios_sistema 
+            SET nombres = $1, apellidos = $2, id_rol = $3 
+            WHERE id_usuario = $4 
+            RETURNING id_usuario, nombres, apellidos, correo, id_rol
+        `;
+        const valores = [nombres, apellidos, id_rol, id];
+        
+        const resultado = await pool.query(query, valores);
+
+        if (resultado.rowCount === 0) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
+        }
+
+        res.status(200).json({ mensaje: 'Usuario actualizado con éxito.', usuario: resultado.rows[0] });
+    } catch (error) {
+        console.error('Error al actualizar usuario:', error);
+        res.status(500).json({ mensaje: 'Error interno al actualizar usuario.' });
+    }
+};
+
+// Función para ELIMINAR un usuario
+const eliminarUsuario = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const query = 'DELETE FROM usuarios_sistema WHERE id_usuario = $1 RETURNING id_usuario';
+        const resultado = await pool.query(query, [id]);
+
+        if (resultado.rowCount === 0) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
+        }
+
+        res.status(200).json({ mensaje: 'Usuario eliminado del sistema.' });
+    } catch (error) {
+        console.error('Error al eliminar usuario:', error);
+        res.status(500).json({ mensaje: 'Error interno al eliminar usuario.' });
+    }
+};
+
+module.exports = { login, renovarToken, logout, registrarUsuario, obtenerUsuarios, actualizarUsuario, eliminarUsuario };
