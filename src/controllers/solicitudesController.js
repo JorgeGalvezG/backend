@@ -3,7 +3,7 @@ const pool = require('../config/db');
 // Función para CREAR solicitud e inscribir socio (Transacción)
 const crearSolicitud = async (req, res) => {
     // 1. Ahora recibimos la clasificación desde el Frontend
-    const { id_tipo_doc, dni, nombres, apellidos, telefono, tipo_solicitud, clasificacion } = req.body;
+    const { id_tipo_doc, dni, nombres, apellidos, telefono,correo, tipo_solicitud, clasificacion } = req.body;
 
     if (!dni || !nombres || !apellidos || !clasificacion) {
         return res.status(400).json({ mensaje: 'DNI, nombres, apellidos y clasificación son obligatorios.' });
@@ -24,11 +24,11 @@ const crearSolicitud = async (req, res) => {
 
         // 3. Insertar en la tabla SOCIOS incluyendo la CLASIFICACIÓN
         const insertSocioQuery = `
-            INSERT INTO socios (id_tipo_doc, dni, nombres, apellidos, telefono, estado_membresia, clasificacion) 
-            VALUES ($1, $2, $3, $4, $5, 'Pendiente', $6) 
+            INSERT INTO socios (id_tipo_doc, dni, nombres, apellidos, telefono,correo, estado_membresia, clasificacion) 
+            VALUES ($1, $2, $3, $4, $5, $6, 'Pendiente', $7) 
             RETURNING id_socio
         `;
-        const valoresSocio = [id_tipo_doc || 1, dni, nombres, apellidos, telefono || '', clasificacion];
+        const valoresSocio = [id_tipo_doc || 1, dni, nombres, apellidos, telefono || '', correo || '', clasificacion];
         const resSocio = await client.query(insertSocioQuery, valoresSocio);
         
         const nuevoIdSocio = resSocio.rows[0].id_socio;
