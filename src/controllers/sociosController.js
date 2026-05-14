@@ -1,12 +1,12 @@
 const pool = require('../config/db');
 
-// Función para LISTAR todos los socios
+// Función para LISTAR todos los socios OFICIALES (Excluye pendientes y rechazados)
 const obtenerSocios = async (req, res) => {
     try {
-        // Traemos los datos principales para llenar la tabla del frontend
         const query = `
             SELECT id_socio, nombres, apellidos, dni, clasificacion, estado_membresia, fecha_ingreso 
             FROM socios 
+            WHERE estado_membresia != 'Pendiente' AND estado_membresia != 'Rechazado'
             ORDER BY fecha_ingreso DESC
         `;
         const resultado = await pool.query(query);
