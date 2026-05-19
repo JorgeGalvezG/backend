@@ -17,6 +17,7 @@ const obtenerZarpes = async (req, res) => {
             ORDER BY z.fecha_salida DESC, z.hora_salida DESC
         `;
         const resultado = await pool.query(query);
+        
         res.status(200).json(resultado.rows);
     } catch (error) {
         console.error('Error al obtener zarpes:', error);
@@ -26,7 +27,17 @@ const obtenerZarpes = async (req, res) => {
 
 // 2. Crear un nuevo Permiso de Zarpe
 const crearZarpe = async (req, res) => {
-    const { id_socio, id_embarcacion, id_tripulante, fecha_salida, hora_salida, fecha_retorno, hora_retorno, destino, pasajeros } = req.body;
+    const { 
+        id_socio, 
+        id_embarcacion, 
+        id_tripulante, 
+        fecha_salida, 
+        hora_salida, 
+        fecha_retorno, 
+        hora_retorno, 
+        destino, 
+        pasajeros // Viene como un Array de objetos: [{nombre: '...', documento: '...'}, ...]
+    } = req.body;
 
     try {
         const query = `
@@ -34,10 +45,27 @@ const crearZarpe = async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Pendiente')
             RETURNING *
         `;
-        const values = [id_socio, id_embarcacion, id_tripulante, fecha_salida, hora_salida, fecha_retorno, hora_retorno, destino, pasajeros || null];
+        
+        const pasajerosJSON = JSON.stringify(pasajeros || []);
+
+        const values = [
+            id_socio, 
+            id_embarcacion, 
+            id_tripulante, 
+            fecha_salida, 
+            hora_salida, 
+            fecha_retorno, 
+            hora_retorno, 
+            destino, 
+            pasajerosJSON // Insertamos el string JSON estructurado
+        ];
+        
         const resultado = await pool.query(query, values);
 
-        res.status(201).json({ mensaje: 'Solicitud de zarpe registrada con éxito.', zarpe: resultado.rows[0] });
+        res.status(201).json({ 
+            mensaje: 'Solicitud de zarpe registrada con éxito.', 
+            zarpe: resultado.rows[0] 
+        });
     } catch (error) {
         console.error('Error al registrar zarpe:', error);
         res.status(500).json({ mensaje: 'Error interno al registrar el permiso de salida.' });
