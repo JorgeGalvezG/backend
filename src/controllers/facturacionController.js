@@ -170,7 +170,9 @@ const obtenerFacturasMorosas = async (req, res) => {
             FROM facturacion f
             INNER JOIN socios soc ON f.id_socio = soc.id_socio
             LEFT JOIN tipos_documento td ON soc.id_tipo_doc = td.id_tipo_doc
-            WHERE f.estado_pago NOT IN ('Pagada', 'Fraccionada') AND f.fecha_vencimiento < CURRENT_DATE
+            WHERE f.estado_pago NOT IN ('Pagada', 'Fraccionada') 
+              AND f.fecha_vencimiento < CURRENT_DATE
+              AND f.id_factura_padre IS NULL /* <--- ESTA ES LA MAGIA */
             ORDER BY f.fecha_vencimiento ASC
         `;
         const resultado = await pool.query(query);
