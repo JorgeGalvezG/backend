@@ -308,18 +308,29 @@ const obtenerEstadosCuentaGeneral = async (req, res) => {
 
 const obtenerDashboardFinanzas = async (req, res) => {
     try {
-        // 1. Datos para las Tarjetas (KPIs) de consumos pendientes
-        const kpisQuery = `
-            SELECT 
-                COALESCE(SUM(monto), 0) AS total_pendiente,
-                COUNT(DISTINCT id_socio) AS socios_afectados,
-                COUNT(id_consumo) AS cantidad_consumos
-            FROM consumos
-            WHERE estado = 'Pendiente de Facturación';
-        `;
-        const kpisResult = await pool.query(kpisQuery);
+        // 1. KPI: Lo que falta facturar (Consumos de Secretaría)
+        const kpiPendiente = await pool.query(`
+            SELECT COALESCE(SUM(monto), 0) AS valor 
+            FROM consumos WHERE estado = 'Pendiente de Facturación'
+        `);
 
-        // 2. Datos para Gráfica de Torta: Distribución de la Deuda Total
+        // 2. KPI: Lo que ya se facturó y está a tiempo (o fraccionado vigente)
+        const kpiPorCobrar = await pool.query(`
+            SELECT COALESCE(SUM(monto_total), 0) AS valor 
+            FROM facturacion 
+            WHERE estado_pago != 'Pagada' AND fecha_vencimiento >= CURRENT_DATE
+        `);
+
+        // 3. KPI: Morosidad dura (Vencido y no fraccionado)
+        const kpiMorosidad = await pool.query(`
+            SELECT COALESCE(SUM(monto_total), 0) AS valor 
+            FROM facturacion 
+            WHERE estado_pago NOT IN ('Pagada', 'Fraccionada') 
+              AND fecha_vencimiento < CURRENT_DATE 
+              AND id_factura_padre IS NULL
+        `);
+
+        // Datos para Gráfica de Torta (Se mantiene igual)
         const distribucionQuery = `
             SELECT 
                 CASE 
@@ -337,9 +348,9 @@ const obtenerDashboardFinanzas = async (req, res) => {
 
         res.status(200).json({
             kpis: {
-                total_pendiente: Number(kpisResult.rows[0].total_pendiente),
-                socios_afectados: Number(kpisResult.rows[0].socios_afectados),
-                cantidad_consumos: Number(kpisResult.rows[0].cantidad_consumos)
+                pendiente_facturar: Number(kpiPendiente.rows[0].valor),
+                facturado_por_cobrar: Number(kpiPorCobrar.rows[0].valor),
+                morosidad_total: Number(kpiMorosidad.rows[0].valor)
             },
             graficaDistribucion: distribucionResult.rows.map(r => ({
                 nombre: r.nombre,
