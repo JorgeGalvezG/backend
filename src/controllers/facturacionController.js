@@ -204,12 +204,14 @@ const obtenerFacturasMorosas = async (req, res) => {
         `;
         const resultado = await pool.query(query);
 
+        const tasaMensual = parseFloat(req.query.tasa_mensual) || 1.0;
+        const tasaDiariaSBS = (tasaMensual / 100) / 30;
+
         const facturas = resultado.rows.map((f) => {
             const diasMora = Math.max(
                 0,
                 Math.floor((new Date() - new Date(f.fecha_vencimiento)) / (1000 * 60 * 60 * 24))
             );
-            const tasaDiariaSBS = 0.00033; // ~1% mensual aprox.
             const interesMora = Number((Number(f.monto_base) * tasaDiariaSBS * diasMora).toFixed(2));
             const totalConInteres = Number((Number(f.monto_base) + interesMora).toFixed(2));
 
@@ -435,7 +437,8 @@ const registrarPago = async (req, res) => {
         const fechaVencimiento = new Date(factura.fecha_vencimiento);
         const hoy = new Date();
         const diasMora = Math.max(0, Math.floor((hoy - fechaVencimiento) / (1000 * 60 * 60 * 24)));
-        const tasaDiariaSBS = 0.00033; // ~1% mensual aprox.
+        const tasaMensual = parseFloat(req.body.tasa_mensual) || 1.0;
+        const tasaDiariaSBS = (tasaMensual / 100) / 30;
         const interesMora = Number((Number(factura.monto_base) * tasaDiariaSBS * diasMora).toFixed(2));
         const montoFinal = Number((Number(factura.monto_base) + interesMora).toFixed(2));
 
