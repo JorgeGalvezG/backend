@@ -8,7 +8,8 @@ const {
     obtenerFacturasMorosas, 
     fraccionarDeuda,
     obtenerEstadosCuentaGeneral, 
-    obtenerDashboardFinanzas 
+    obtenerDashboardFinanzas,
+    registrarPago
 } = require('../controllers/facturacionController');
 
 // 2. Importación de middlewares
@@ -19,8 +20,8 @@ const { verificarToken, autorizarRoles } = require('../middlewares/authMiddlewar
 // ==========================================
 
 // RUTA GET: Listar consumos pendientes de facturación, agrupados por socio
-// Acceso: Jefe (1) y Finanzas (4)
-router.get('/consumos-pendientes', verificarToken, autorizarRoles(1, 4), obtenerConsumosPendientes);
+// Acceso: Jefe (1), Secretaría (2) y Finanzas (4)
+router.get('/consumos-pendientes', verificarToken, autorizarRoles(1, 2, 4), obtenerConsumosPendientes);
 
 // RUTA POST: Generar la facturación mensual (consolida consumos pendientes en facturas)
 // Acceso: SOLO Finanzas (4)
@@ -41,5 +42,9 @@ router.get('/estados-cuenta', verificarToken, autorizarRoles(1, 4), obtenerEstad
 // RUTA GET: Obtener KPIs y datos para las gráficas del panel de inicio
 // Acceso: Jefe (1) y Finanzas (4)
 router.get('/dashboard', verificarToken, autorizarRoles(1, 4), obtenerDashboardFinanzas);
+
+// RUTA POST: Registrar el pago de una factura y calcular interés SBS
+// Acceso: Jefe (1), Finanzas (4) y Cobranza (5)
+router.post('/pagar', verificarToken, autorizarRoles(1, 4, 5), registrarPago);
 
 module.exports = router;
